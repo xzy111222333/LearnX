@@ -20,38 +20,36 @@
 
 ```
 LearnX/
+├── CLAUDE.md                # AI 辅助开发规则
 ├── backend/                 # 后端项目目录
-│   ├── api/                 # API 接口路由
-│   ├── models/              # 数据库模型
-│   ├── service/             # 业务逻辑层
-│   ├── utils/               # 工具类
-│   ├── config.py            # 配置文件
-│   └── main.py              # 项目入口
-├── frontend/                # 前端项目目录
-│   ├── public/              # 静态资源
 │   ├── src/
-│   │   ├── api/             # API 请求封装
-│   │   ├── assets/          # 图片、样式等资源
-│   │   ├── components/      # 公共组件
-│   │   ├── router/          # 路由配置
-│   │   ├── stores/          # 状态管理
-│   │   ├── utils/           # 工具类
-│   │   ├── views/           # 页面组件
-│   │   ├── App.vue          # 根组件
-│   │   └── main.js          # 项目入口
-│   ├── index.html
+│   │   ├── config/          # 配置文件
+│   │   ├── controllers/     # 控制器
+│   │   ├── middleware/      # 中间件
+│   │   ├── models/          # 数据模型
+│   │   ├── routes/          # 路由
+│   │   ├── services/        # 业务逻辑
+│   │   ├── utils/           # 工具函数
+│   │   └── app.ts           # 应用入口
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/                # 前端项目目录
+│   ├── app/                 # Next.js 页面
+│   ├── components/          # 页面与通用组件
+│   ├── hooks/               # 自定义 Hook
+│   ├── lib/                 # 工具函数与模拟数据
+│   ├── public/              # 静态资源
 │   └── package.json
 ├── docs/                    # 文档目录
-│   ├── design/              # 设计文档
-│   │   └── design-spec.md   # 设计说明
-│   ├── contributions/       # 个人贡献说明
-│   │   ├── 01-backend/      # 后端贡献
-│   │   ├── 02-ui/           # 前端贡献
-│   │   └── 03-other/        # 其他贡献
+│   ├── architecture.md      # 架构设计文档
+│   ├── database.md          # 数据库设计文档
 │   ├── api.md               # API 文档
 │   ├── backend.md           # 后端说明
 │   ├── frontend.md          # 前端说明
-│   └── deployment.md        # 部署文档
+│   ├── deployment.md        # 部署文档
+│   └── contributions/
+│       ├── 02-ui/           # UI 阶段贡献说明
+│       └── 03-architecture/ # 架构设计阶段贡献说明
 ├── .gitignore
 └── README.md
 ```
@@ -73,8 +71,8 @@ LearnX/
 
 ## 技术栈（初步规划）
 
-- 前端：Vue 3 + Vite + Element Plus + Axios + 响应式布局（多终端适配）+ 微信 / 支付宝支付 H5 SDK
-- 后端：Python + FastAPI + 阿里云 OSS / 腾讯云 COS SDK（资料文件存储）+ 微信 / 支付宝支付服务端 SDK（沙箱环境测试）
+- 前端：Next.js + React + TypeScript + Tailwind CSS
+- 后端：Node.js + Express + TypeScript + Sequelize
 - 数据库：MySQL（支持事务，保证订单 / 抽成数据一致性）
 
 ## 分工说明
@@ -83,8 +81,8 @@ LearnX/
 | 成员              | 职责模块                      | 说明                                 |
 | --------------- | ------------------------- | ---------------------------------- |
 | 施鹏（前端）          | 首页、分类页、上传页、购买页、个人中心等全前端模块 | ✅ 已完成：前端项目初始化、核心页面开发、响应式布局、主题切换、文件上传、资料购买、个人中心等功能实现 |
-| 钱登涨（后端）         | 用户、资料、订单、抽成、收益五大核心模块 API  | 负责核心业务逻辑全接口开发，是项目业务层的核心开发          |
-| 许正扬（负责人 + 核心开发） | 数据库设计、支付 / 文件存储模块、部署、联调   | 开发类工作占比 80%，统筹占比 20%，工作量与另外两人完全均衡  |
+| 钱登涨（后端）         | 用户、资料、订单、抽成、收益五大核心模块 API  | ✅ 已完成：后端项目初始化、核心模块分层、基础接口与模型搭建 |
+| 许正扬（负责人 + 核心开发） | 数据库设计、系统交互流程、部署、联调兜底   | ✅ 已完成：数据库设计文档、ER 图、系统交互流程、架构文档补充 |
 
 
 ## 项目功能规划

@@ -1,166 +1,223 @@
 # 数据库设计文档
 
-## 1. 数据库选型
+## 1. 数据库概述
+
+本项目使用 MySQL 作为数据库管理系统，后端采用 Sequelize ORM 进行数据库操作。数据库设计围绕“用户、资料、订单、收益”四类核心业务展开，保证数据的完整性、一致性和可扩展性。
+
+## 2. 数据库选型
 
 | 项目 | 选择 |
 | --- | --- |
 | 数据库 | MySQL 8.0+ |
-| 存储引擎 | InnoDB |
+| ORM | Sequelize |
 | 字符集 | utf8mb4 |
 
 ### 选型理由
 
-1. 平台存在注册、资料上传、订单支付、平台抽成、收益结算等强事务场景，适合使用关系型数据库。
-2. MySQL 生态成熟，和 FastAPI、SQLAlchemy 配合方便，适合课程项目开发。
-3. InnoDB 支持事务和外键，便于保证订单金额、平台分成和上传者收益的一致性。
+1. 平台包含资料上传、订单创建、支付结算、收益统计等典型关系型业务。
+2. MySQL 支持事务和外键，适合订单与收益场景。
+3. Sequelize 便于和当前后端 `Node.js + Express + TypeScript` 项目配合使用。
 
-## 2. 核心实体说明
+## 3. 核心表结构设计
 
-本阶段先设计 3 个核心数据表，满足作业“至少 3 个核心表”的要求：
+### 3.1 表结构概览
 
-1. `users`：存储平台用户信息。
-2. `materials`：存储考研资料信息。
-3. `orders`：存储资料购买记录与收益分配信息。
+| 表名 | 描述 | 作用 |
+| --- | --- | --- |
+| `users` | 用户表 | 存储平台用户信息 |
+| `materials` | 资料表 | 存储上传的考研资料 |
+| `tags` | 标签表 | 存储资料标签 |
+| `material_tags` | 资料标签关联表 | 建立资料和标签的多对多关系 |
+| `orders` | 订单表 | 存储订单主记录 |
+| `order_items` | 订单明细表 | 存储订单中的资料明细 |
+| `earnings` | 收益表 | 存储平台收益或用户收益记录 |
 
-## 3. 数据表设计
+### 3.2 详细表结构
 
-### 3.1 用户表 `users`
+#### 3.2.1 `users`
 
-| 字段名 | 类型 | 约束 | 说明 |
+| 字段名 | 数据类型 | 约束 | 说明 |
 | --- | --- | --- | --- |
 | `id` | INT | PK, AUTO_INCREMENT | 用户主键 |
-| `username` | VARCHAR(50) | NOT NULL, UNIQUE | 用户名 |
-| `email` | VARCHAR(100) | NOT NULL, UNIQUE | 邮箱 |
-| `password_hash` | VARCHAR(255) | NOT NULL | 密码哈希 |
-| `role` | VARCHAR(20) | NOT NULL, DEFAULT 'user' | 用户角色 |
-| `balance` | DECIMAL(10,2) | NOT NULL, DEFAULT 0.00 | 当前余额 |
-| `created_at` | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间 |
+| `email` | VARCHAR(255) | UNIQUE, NOT NULL | 用户邮箱 |
+| `password` | VARCHAR(255) | NOT NULL | 加密后的密码 |
+| `name` | VARCHAR(255) | NOT NULL | 用户昵称/姓名 |
+| `role` | ENUM('user', 'admin') | DEFAULT 'user' | 用户角色 |
+| `createdAt` | DATETIME | NOT NULL | 创建时间 |
+| `updatedAt` | DATETIME | NOT NULL | 更新时间 |
 
-### 3.2 资料表 `materials`
+#### 3.2.2 `materials`
 
-| 字段名 | 类型 | 约束 | 说明 |
+| 字段名 | 数据类型 | 约束 | 说明 |
 | --- | --- | --- | --- |
 | `id` | INT | PK, AUTO_INCREMENT | 资料主键 |
-| `uploader_id` | INT | NOT NULL, FK -> users.id | 上传者 ID |
-| `title` | VARCHAR(100) | NOT NULL | 资料标题 |
-| `description` | TEXT | NULL | 资料描述 |
-| `category` | VARCHAR(30) | NOT NULL | 资料分类 |
+| `title` | VARCHAR(255) | NOT NULL | 资料标题 |
+| `description` | TEXT | NOT NULL | 资料描述 |
+| `fileUrl` | VARCHAR(255) | NOT NULL | 文件路径 |
+| `thumbnailUrl` | VARCHAR(255) | NULL | 缩略图路径 |
+| `category` | VARCHAR(100) | NOT NULL | 资料分类 |
 | `price` | DECIMAL(10,2) | NOT NULL | 售价 |
-| `file_url` | VARCHAR(255) | NOT NULL | 文件路径 |
-| `status` | VARCHAR(20) | NOT NULL, DEFAULT 'active' | 资料状态 |
-| `created_at` | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 上传时间 |
+| `authorId` | INT | FK -> users.id | 上传者 ID |
+| `createdAt` | DATETIME | NOT NULL | 创建时间 |
+| `updatedAt` | DATETIME | NOT NULL | 更新时间 |
 
-### 3.3 订单表 `orders`
+#### 3.2.3 `tags`
 
-| 字段名 | 类型 | 约束 | 说明 |
+| 字段名 | 数据类型 | 约束 | 说明 |
+| --- | --- | --- | --- |
+| `id` | INT | PK, AUTO_INCREMENT | 标签主键 |
+| `name` | VARCHAR(50) | UNIQUE, NOT NULL | 标签名称 |
+| `createdAt` | DATETIME | NOT NULL | 创建时间 |
+| `updatedAt` | DATETIME | NOT NULL | 更新时间 |
+
+#### 3.2.4 `material_tags`
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| --- | --- | --- | --- |
+| `materialId` | INT | PK, FK -> materials.id | 资料 ID |
+| `tagId` | INT | PK, FK -> tags.id | 标签 ID |
+
+#### 3.2.5 `orders`
+
+| 字段名 | 数据类型 | 约束 | 说明 |
 | --- | --- | --- | --- |
 | `id` | INT | PK, AUTO_INCREMENT | 订单主键 |
-| `buyer_id` | INT | NOT NULL, FK -> users.id | 购买者 ID |
-| `material_id` | INT | NOT NULL, FK -> materials.id | 资料 ID |
-| `amount` | DECIMAL(10,2) | NOT NULL | 订单总金额 |
-| `platform_fee` | DECIMAL(10,2) | NOT NULL | 平台抽成金额 |
-| `uploader_income` | DECIMAL(10,2) | NOT NULL | 上传者收益 |
-| `status` | VARCHAR(20) | NOT NULL, DEFAULT 'pending' | 订单状态 |
-| `created_at` | TIMESTAMP | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间 |
+| `buyerId` | INT | FK -> users.id | 购买者 ID |
+| `totalAmount` | DECIMAL(10,2) | NOT NULL | 订单总金额 |
+| `status` | ENUM('pending', 'completed', 'cancelled') | DEFAULT 'pending' | 订单状态 |
+| `createdAt` | DATETIME | NOT NULL | 创建时间 |
+| `updatedAt` | DATETIME | NOT NULL | 更新时间 |
+
+#### 3.2.6 `order_items`
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| --- | --- | --- | --- |
+| `id` | INT | PK, AUTO_INCREMENT | 订单明细主键 |
+| `orderId` | INT | FK -> orders.id | 订单 ID |
+| `materialId` | INT | FK -> materials.id | 资料 ID |
+| `quantity` | INT | NOT NULL | 购买数量 |
+| `price` | DECIMAL(10,2) | NOT NULL | 下单时单价 |
+| `createdAt` | DATETIME | NOT NULL | 创建时间 |
+| `updatedAt` | DATETIME | NOT NULL | 更新时间 |
+
+#### 3.2.7 `earnings`
+
+| 字段名 | 数据类型 | 约束 | 说明 |
+| --- | --- | --- | --- |
+| `id` | INT | PK, AUTO_INCREMENT | 收益记录主键 |
+| `userId` | INT | FK -> users.id | 收益归属用户 ID |
+| `amount` | DECIMAL(10,2) | NOT NULL | 金额 |
+| `source` | ENUM('sale', 'referral') | NOT NULL | 收益来源 |
+| `orderId` | INT | FK -> orders.id | 关联订单 ID |
+| `createdAt` | DATETIME | NOT NULL | 创建时间 |
+| `updatedAt` | DATETIME | NOT NULL | 更新时间 |
 
 ## 4. ER 图
 
-下面是标准 Mermaid `erDiagram` 语法，放到支持 Mermaid 的 Markdown 预览器里即可显示。
-
 ```mermaid
 erDiagram
+    USERS ||--o{ MATERIALS : creates
+    USERS ||--o{ ORDERS : places
+    USERS ||--o{ EARNINGS : receives
+    MATERIALS ||--o{ ORDER_ITEMS : included_in
+    MATERIALS }o--o{ TAGS : has
+    ORDERS ||--o{ ORDER_ITEMS : contains
+    ORDERS ||--o{ EARNINGS : generates
+
     USERS {
-        INT id PK
-        VARCHAR username
-        VARCHAR email
-        VARCHAR password_hash
-        VARCHAR role
-        DECIMAL balance
-        TIMESTAMP created_at
+        int id PK
+        string email UK
+        string password
+        string name
+        enum role
+        datetime createdAt
+        datetime updatedAt
     }
 
     MATERIALS {
-        INT id PK
-        INT uploader_id FK
-        VARCHAR title
-        TEXT description
-        VARCHAR category
-        DECIMAL price
-        VARCHAR file_url
-        VARCHAR status
-        TIMESTAMP created_at
+        int id PK
+        string title
+        text description
+        string fileUrl
+        string thumbnailUrl
+        string category
+        decimal price
+        int authorId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    TAGS {
+        int id PK
+        string name UK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    MATERIAL_TAGS {
+        int materialId PK
+        int tagId PK
     }
 
     ORDERS {
-        INT id PK
-        INT buyer_id FK
-        INT material_id FK
-        DECIMAL amount
-        DECIMAL platform_fee
-        DECIMAL uploader_income
-        VARCHAR status
-        TIMESTAMP created_at
+        int id PK
+        int buyerId FK
+        decimal totalAmount
+        enum status
+        datetime createdAt
+        datetime updatedAt
     }
 
-    USERS ||--o{ MATERIALS : uploads
-    USERS ||--o{ ORDERS : places
-    MATERIALS ||--o{ ORDERS : contains
+    ORDER_ITEMS {
+        int id PK
+        int orderId FK
+        int materialId FK
+        int quantity
+        decimal price
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    EARNINGS {
+        int id PK
+        int userId FK
+        decimal amount
+        enum source
+        int orderId FK
+        datetime createdAt
+        datetime updatedAt
+    }
 ```
 
-### 关系说明
+## 5. 关系说明
 
-1. 一个用户可以上传多份资料，所以 `users` 和 `materials` 是一对多关系。
-2. 一个用户可以产生多条订单，所以 `users` 和 `orders` 是一对多关系。
-3. 一份资料可以被多个用户购买，所以 `materials` 和 `orders` 是一对多关系。
+1. 一个用户可以上传多份资料，因此 `users` 与 `materials` 是一对多关系。
+2. 一个用户可以创建多笔订单，因此 `users` 与 `orders` 是一对多关系。
+3. 一笔订单可以包含多条订单明细，因此 `orders` 与 `order_items` 是一对多关系。
+4. 一份资料可以出现在多条订单明细中，因此 `materials` 与 `order_items` 是一对多关系。
+5. 资料和标签之间是多对多关系，通过 `material_tags` 关联表实现。
+6. 收益记录与用户、订单建立关联，便于后续收益统计。
 
-## 5. 建表 SQL
+## 6. 索引与约束设计
 
-```sql
-CREATE TABLE users (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'user',
-    balance DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+### 6.1 索引设计
 
-CREATE TABLE materials (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    uploader_id INT NOT NULL,
-    title VARCHAR(100) NOT NULL,
-    description TEXT,
-    category VARCHAR(30) NOT NULL,
-    price DECIMAL(10,2) NOT NULL,
-    file_url VARCHAR(255) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'active',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_material_uploader
-        FOREIGN KEY (uploader_id) REFERENCES users(id)
-        ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+- 主键索引：所有表的 `id` 字段默认建立主键索引。
+- 唯一索引：`users.email`、`tags.name`。
+- 普通索引：`materials.authorId`、`materials.category`、`orders.buyerId`、`order_items.orderId`、`earnings.userId`。
 
-CREATE TABLE orders (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    buyer_id INT NOT NULL,
-    material_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    platform_fee DECIMAL(10,2) NOT NULL,
-    uploader_income DECIMAL(10,2) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_order_buyer
-        FOREIGN KEY (buyer_id) REFERENCES users(id)
-        ON DELETE CASCADE,
-    CONSTRAINT fk_order_material
-        FOREIGN KEY (material_id) REFERENCES materials(id)
-        ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
+### 6.2 数据完整性约束
 
-## 6. 设计说明
+- 使用主键约束保证实体唯一性。
+- 使用外键约束保证表之间引用关系正确。
+- 使用 `NOT NULL`、`ENUM`、`DECIMAL` 等约束保证字段有效性。
 
-1. 订单表中单独保存 `platform_fee` 和 `uploader_income`，避免后续重复计算造成金额偏差。
-2. 所有主表都带有 `created_at` 字段，方便后续统计和审计。
-3. 当前阶段先满足课程作业的最小闭环，后续可以继续扩展 `reviews`、`withdrawals` 等业务表。
+## 7. 数据迁移与管理说明
+
+1. 开发阶段可使用 Sequelize 同步模型创建表结构。
+2. 后续若项目继续推进，建议补充正式 migration 脚本。
+3. 数据库应定期备份，并保留恢复方案。
+
+## 8. 总结
+
+本数据库设计满足软件架构设计作业要求，已包含核心数据表设计、ER 图和关系说明。当前设计既能支撑课程阶段的资料交易流程，也方便后续继续扩展支付、评价、提现等业务模块。
