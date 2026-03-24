@@ -1,130 +1,146 @@
 # 架构设计文档
 
-## 前端架构
+## 1. 项目概述
 
-### 技术栈
+本项目为“研途共享”考研资料付费共享平台，面向考研学生提供资料上传、浏览、购买、收益结算等功能。系统采用前后端分离架构，前端负责页面展示与交互，后端负责业务处理、权限控制和数据持久化。
+
+## 2. 技术选型确认
+
+| 层级 | 选择 | 理由 |
+| --- | --- | --- |
+| 前端框架 | Next.js + React + TypeScript | 已完成页面搭建，组件化能力强，适合响应式 Web 项目 |
+| 后端框架 | FastAPI | 开发效率高，接口文档自动生成，适合课程项目快速落地 |
+| 数据库 | MySQL 8.0 | 支持事务和外键，适合订单、抽成、收益等关系型业务 |
+| 部署方式 | Docker Compose | 便于统一管理前端、后端、数据库服务，后续部署清晰 |
+
+## 3. 前端架构
+
+### 3.1 技术栈
 
 | 技术 | 版本 | 用途 |
 | --- | --- | --- |
-| Next.js | 16.1.6 | 前端框架，提供 App Router、Server Components 等功能 |
-| React | 19.2.4 | UI 库 |
-| TypeScript | 5.7.3 | 类型系统 |
-| Tailwind CSS | 4.2.0 | 样式框架 |
+| Next.js | 16.1.6 | 前端框架，提供 App Router、页面组织能力 |
+| React | 19.2.4 | UI 组件开发 |
+| TypeScript | 5.7.3 | 类型约束 |
+| Tailwind CSS | 4.2.0 | 样式开发 |
 | Radix UI | 最新版 | 基础 UI 组件 |
 | React Hook Form | 7.54.1 | 表单处理 |
-| Zod | 3.24.1 | 数据验证 |
-| Lucide React | 0.564.0 | 图标库 |
-| Sonner | 1.7.1 | 通知组件 |
-| Recharts | 2.15.0 | 图表库 |
+| Zod | 3.24.1 | 数据校验 |
 
-### 架构设计
-
-#### 1. 目录结构
+### 3.2 页面与组件结构
 
 ```
 frontend/
-├── app/                    # Next.js App Router 页面
-│   ├── dashboard/          # 个人中心
-│   │   ├── earnings/       # 收益管理
-│   │   ├── materials/      # 资料管理
-│   │   ├── orders/         # 订单管理
-│   │   ├── settings/       # 设置
-│   │   ├── layout.tsx      # 仪表盘布局
-│   │   └── page.tsx        # 仪表盘首页
-│   ├── login/              # 登录页面
-│   ├── materials/          # 资料相关页面
-│   │   ├── [id]/           # 资料详情页
-│   │   └── page.tsx        # 资料列表页
-│   ├── register/           # 注册页面
-│   ├── upload/             # 资料上传页面
-│   ├── globals.css         # 全局样式
-│   ├── layout.tsx          # 根布局
-│   └── page.tsx            # 首页
-├── components/             # 组件
-│   ├── layout/             # 布局组件
-│   │   ├── dashboard-sidebar.tsx  # 仪表盘侧边栏
-│   │   ├── footer.tsx      # 页脚
-│   │   └── header.tsx      # 头部
-│   ├── ui/                 # UI 组件（基于 Radix UI）
-│   ├── category-card.tsx   # 分类卡片
-│   ├── file-upload.tsx     # 文件上传组件
-│   ├── material-card.tsx   # 资料卡片
-│   ├── purchase-dialog.tsx # 购买对话框
-│   ├── stats-card.tsx      # 统计卡片
-│   └── theme-provider.tsx  # 主题提供者
-├── hooks/                  # 自定义钩子
-│   ├── use-mobile.ts       # 移动端检测
-│   └── use-toast.ts        # 通知钩子
-├── lib/                    # 工具库
-│   ├── mock-data.ts        # 模拟数据
-│   └── utils.ts            # 工具函数
-├── public/                 # 静态资源
-└── styles/                 # 样式文件
+├── app/
+│   ├── page.tsx                 # 首页
+│   ├── login/                   # 登录页
+│   ├── register/                # 注册页
+│   ├── materials/               # 资料列表 / 资料详情
+│   ├── upload/                  # 资料上传页
+│   └── dashboard/               # 个人中心
+├── components/
+│   ├── layout/                  # 头部、底部、侧边栏
+│   ├── ui/                      # 通用 UI 组件
+│   ├── material-card.tsx        # 资料卡片
+│   ├── category-card.tsx        # 分类卡片
+│   ├── file-upload.tsx          # 文件上传组件
+│   └── purchase-dialog.tsx      # 购买弹窗
+├── hooks/                       # 自定义 Hook
+├── lib/                         # 工具函数和模拟数据
+└── public/                      # 静态资源
 ```
 
-#### 2. 核心模块
-
-##### 2.1 路由系统
-- 使用 Next.js App Router 实现客户端路由
-- 支持嵌套路由和动态路由
-- 实现路由守卫，保护需要登录的页面
-
-##### 2.2 状态管理
-- 采用 React Context API + useReducer 管理全局状态
-- 局部状态使用 useState 和 useReducer
-- 表单状态使用 React Hook Form
-
-##### 2.3 数据流
-- 服务器组件：直接从后端 API 获取数据
-- 客户端组件：通过 fetch API 或 axios 请求数据
-- 数据验证使用 Zod 进行类型检查和验证
-
-##### 2.4 组件设计
-- 原子组件：基于 Radix UI 封装的基础 UI 组件
-- 分子组件：组合原子组件形成的功能组件
-- 页面组件：由分子组件和原子组件构成的完整页面
-
-##### 2.5 响应式设计
-- 使用 Tailwind CSS 实现响应式布局
-- 适配桌面端、平板端和移动端
-- 针对不同设备优化用户体验
-
-### 架构流程图
+### 3.3 前端架构图
 
 ```mermaid
 flowchart TD
-    A[用户访问] --> B[Next.js 路由]
-    B --> C{页面类型}
-    C -->|服务器组件| D[直接获取数据]
-    C -->|客户端组件| E[客户端渲染]
-    D --> F[页面渲染]
-    E --> G[API 请求]
-    G --> H[数据处理]
-    H --> F
-    F --> I[用户交互]
-    I --> J[状态更新]
-    J --> F
+    A[用户] --> B[Next.js 页面层]
+    B --> C[首页/分类页/详情页]
+    B --> D[上传页/登录页/注册页]
+    B --> E[个人中心 Dashboard]
+    C --> F[通用业务组件]
+    D --> F
+    E --> F
+    F --> G[API 请求层]
+    G --> H[FastAPI 后端服务]
 ```
 
-### 前端与后端交互
+## 4. 后端架构
 
-- 使用 RESTful API 进行数据交互
-- 认证使用 JWT 令牌
-- 文件上传使用 multipart/form-data
-- 支付流程通过后端 API 与支付平台交互
+### 4.1 模块划分
 
-### 性能优化
+后端按“接口层 - 业务层 - 数据层”进行划分：
 
-- 使用 Next.js 服务器组件减少客户端渲染负担
-- 实现图片懒加载
-- 代码分割，减少初始加载时间
-- 缓存策略，提高重复访问速度
-- 使用 React.memo 和 useMemo 优化渲染性能
+1. 接口层：处理 HTTP 请求、参数校验、返回统一响应。
+2. 业务层：处理用户、资料、订单、收益等核心业务逻辑。
+3. 数据层：负责 MySQL 数据读写和实体关系维护。
 
-### 安全措施
+### 4.2 后端模块设计
 
-- 输入验证，防止 XSS 攻击
-- API 调用添加认证令牌
-- 敏感数据加密传输
-- 防止 CSRF 攻击
-- 定期更新依赖，修复安全漏洞
+| 模块 | 职责 |
+| --- | --- |
+| 用户模块 | 注册、登录、身份认证、权限校验 |
+| 资料模块 | 资料上传、分类查询、详情查看、状态管理 |
+| 订单模块 | 创建订单、支付状态更新、购买记录查询 |
+| 收益模块 | 平台抽成计算、上传者收益统计、提现记录管理 |
+| 文件存储模块 | 文件上传路径管理，后续接入 OSS / COS |
+
+### 4.3 后端架构图
+
+```mermaid
+flowchart TD
+    A[前端请求] --> B[FastAPI Router 接口层]
+    B --> C[用户服务 User Service]
+    B --> D[资料服务 Material Service]
+    B --> E[订单服务 Order Service]
+    B --> F[收益服务 Income Service]
+    C --> G[(MySQL)]
+    D --> G
+    E --> G
+    F --> G
+    D --> H[对象存储 OSS/COS]
+```
+
+## 5. 数据库架构
+
+数据库当前设计 3 个核心表：
+
+1. `users`：平台用户信息。
+2. `materials`：考研资料信息。
+3. `orders`：资料订单及收益分配信息。
+
+数据库详细设计、ER 图和建表 SQL 见 [`docs/database.md`](/d:/pythonproject/yantushare/docs/database.md)。
+
+## 6. 系统交互流程
+
+### 6.1 核心业务流程
+
+用户在前端浏览资料，选择目标资料后发起购买请求。后端创建订单并完成支付结果处理，随后更新订单状态、记录平台抽成和上传者收益，最后前端展示购买结果和订单信息。
+
+### 6.2 系统交互流程图
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant F as 前端
+    participant B as 后端
+    participant DB as MySQL
+
+    U->>F: 浏览资料并点击购买
+    F->>B: 请求资料详情/创建订单
+    B->>DB: 查询资料与用户信息
+    DB-->>B: 返回数据
+    B->>DB: 写入订单记录
+    DB-->>B: 返回订单编号
+    B-->>F: 返回订单信息
+    F-->>U: 展示支付结果
+    B->>DB: 更新订单状态、平台抽成、上传者收益
+    DB-->>B: 更新成功
+```
+
+## 7. 架构说明总结
+
+1. 前端负责页面展示、表单交互和 API 调用。
+2. 后端负责业务逻辑、鉴权、订单处理和数据库操作。
+3. 数据库负责持久化用户、资料和订单数据。
+4. 当前架构满足课程作业阶段需求，后续可以继续扩展支付接口、对象存储和部署配置。

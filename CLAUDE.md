@@ -184,3 +184,49 @@
   - 定期重构代码
   - 优化性能
   - 学习新技术
+
+---
+
+## 后端开发规则
+
+### 1. 技术栈与框架
+- **框架**：FastAPI
+- **语言**：Python 3.10+
+- **数据库**：MySQL 8.0+ (使用 SQLAlchemy 作为 ORM)
+- **依赖管理**：Poetry 或 requirements.txt
+
+### 2. 代码风格
+- **命名规范**：
+  - 类名：使用 PascalCase（如 `UserModel`）
+  - 函数/方法/变量名：使用 snake_case（如 `get_user_by_id`）
+  - 常量名：使用 UPPER_SNAKE_CASE（如 `MAX_UPLOAD_SIZE`）
+- **代码格式**：
+  - 使用 `black` 进行代码格式化（行宽 88）
+  - 使用 `isort` 辅助格式化
+  - 使用 `flake8` 管理导入顺序
+
+### 3. 类型提示 (Type Hints)
+- 所有函数参数和返回值必须包含完整的类型提示（Type Hints）。
+- 使用 Pydantic 模型进行请求和响应的数据验证。
+
+### 4. 数据库与 ORM
+- 禁止在业务逻辑中直接拼接 SQL 语句，必须使用 SQLAlchemy ORM。
+- 涉及订单、金额变动的操作（如支付、抽成、结算），必须使用数据库事务（Transaction）保证数据一致性。
+- 数据库表名使用复数形式的 snake_case（如 `users`, `materials`, `orders`）。
+
+### 5. API 规范
+- 遵循 RESTful API 设计原则。
+- 统一的响应格式：
+  ```json
+  {
+    "code": 200,
+    "message": "success",
+    "data": { ... }
+  }
+  ```
+- 错误处理：使用 FastAPI 的 `HTTPException` 抛出明确的 HTTP 状态码和错误信息。
+
+### 6. 安全规范
+- 密码必须使用 bcrypt 等强哈希算法加密存储，禁止明文存储。
+- 敏感配置（如数据库密码、支付密钥、OSS Secret）必须通过 `.env` 环境变量注入，严禁硬编码。
+- 接口必须配置合理的权限校验（如 JWT Token 验证）。
