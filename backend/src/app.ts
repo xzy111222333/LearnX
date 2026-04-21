@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.routes';
 import materialsRoutes from './routes/materials.routes';
 import ordersRoutes from './routes/orders.routes';
 import earningsRoutes from './routes/earnings.routes';
+import aiRoutes from './routes/ai.routes';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/materials', materialsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/earnings', earningsRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 错误处理中间件
 app.use(errorMiddleware);

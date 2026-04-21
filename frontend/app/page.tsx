@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Search, Upload, Shield, Award, ArrowRight, TrendingUp } from "lucide-react"
+import { Search, Upload, Shield, Award, ArrowRight, TrendingUp, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/layout/header"
@@ -195,6 +195,19 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* AI Customer Service Button */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button 
+            size="icon" 
+            className="h-16 w-16 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all duration-300 hover:scale-110"
+            asChild
+          >
+            <Link href="/chat">
+              <MessageCircle className="h-8 w-8" />
+            </Link>
+          </Button>
+        </div>
       </main>
 
       <Footer />
