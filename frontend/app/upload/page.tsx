@@ -44,6 +44,7 @@ export default function UploadPage() {
   const [category, setCategory] = useState<Category>("politics")
   const [tags, setTags] = useState("")
   const [price, setPrice] = useState("9.9")
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const canProceed = () => {
     switch (currentStep) {
@@ -67,6 +68,33 @@ export default function UploadPage() {
   const handlePrev = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const handleGenerateDescription = async () => {
+    if (!title.trim() || isGenerating) return
+    
+    setIsGenerating(true)
+    try {
+      const response = await fetch('http://localhost:3001/api/ai/generate-description', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: title,
+          category: category
+        })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setDescription(data.data.description)
+      }
+    } catch (error) {
+      console.error('Error generating description:', error)
+    } finally {
+      setIsGenerating(false)
     }
   }
 
@@ -216,7 +244,29 @@ export default function UploadPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="description">资料描述 *</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="description">资料描述 *</Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGenerateDescription}
+                            disabled={!title.trim() || isGenerating}
+                            className="gap-1"
+                          >
+                            {isGenerating ? (
+                              <>
+                                <span className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                                生成中...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4" />
+                                AI 生成
+                              </>
+                            )}
+                          </Button>
+                        </div>
                         <Textarea
                           id="description"
                           placeholder="详细介绍你的资料内容、特点、适用人群等..."
